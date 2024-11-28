@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUNPODCAST</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-container {
+            text-align: center;
+            padding: 80px 40px;
+            background: #000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .logo-image-container {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            animation: logoRotate 10s linear infinite;
+        }
+
+        .logo-image-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('./images/logo.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 1;
+        }
+
+        .logo-image-container:hover {
+            background-color: transparent;
+        }
+
+        .logo-image-container:hover::before {
+            opacity: 1;
+        }
+
+        .logo-image-container:hover::after {
+            display: none;
+        }
+
+        .logo-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .logo-upload {
+            display: none;
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            margin-top: 180px;
+            flex: 1;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .blog-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            max-width: 600px;
+            width: 100%;
+            padding: 0 20px;
+        }
+
+        .blog-card {
+            position: relative;
+            z-index: 10;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            width: 100%;
+            aspect-ratio: 1;
+            height: auto;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform-style: preserve-3d;
+            transform: perspective(1000px) rotateX(0) rotateY(0);
+        }
+
+        .blog-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            user-select: none;
+            -webkit-user-drag: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            pointer-events: none;
+        }
+
+        .blog-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 15px;
+            background: linear-gradient(
+                to top,
+                rgba(0, 0, 0, 0.8) 0%,
+                rgba(0, 0, 0, 0.6) 50%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .blog-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .blog-subtitle,
+        .upload-time {
+            display: none;
+        }
+
+        .blog-card:hover,
+        .blog-card:hover::before,
+        .blog-card:hover::after,
+        .blog-card:hover .blog-cover,
+        .blog-card:hover .blog-content,
+        .blog-card:hover .blog-title {
+            transform: none;
+        }
+
+        .blog-card::before,
+        .blog-card::after {
+            display: none;
+        }
+
+        .player-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 26, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+
+        .player-container.active {
+            transform: translateY(0);
+        }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 10px;
+        }
+
+        .play-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .play-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .play-btn:active {
+            transform: scale(0.95);
+        }
+
+        .play-btn i {
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .player-container {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .progress-container {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff3366, #00ffff);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .time-info {
+            color: #999;
+            font-size: 14px;
+            min-width: 100px;
+            text-align: right;
+        }
+
+        .now-playing {
+            color: #fff;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        @media screen and (max-width: 800px) {
+            .blog-list {
+                max-width: 500px;
+                gap: 20px;
+            }
+        }
+
+        @media screen and (max-width: 600px) {
+            .blog-list {
+                max-width: 400px;
+                gap: 15px;
+            }
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 4px #fff;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .star-rings {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0.15;
+        }
+
+        .ring {
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: rotate 60s linear infinite;
+        }
+
+        .ring:nth-child(1) {
+            width: 200px;
+            height: 200px;
+            border-width: 2px;
+            animation-duration: 30s;
+        }
+
+        .ring:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            border-width: 3px;
+            animation-duration: 45s;
+        }
+
+        .ring:nth-child(3) {
+            width: 600px;
+            height: 600px;
+            border-width: 1px;
+            animation-duration: 60s;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes logoRotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* 修改字幕容器样式，放在卡片上方 */
+        .subtitle-container {
+            position: absolute;
+            top: 20px;  /* 距离卡片顶部的距离 */
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            z-index: 99;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            padding: 10px;
+            border-radius: 8px;
+            pointer-events: none; /* 防���字幕遮挡点击 */
+        }
+
+        .subtitle-container.active {
+            opacity: 1;
+        }
+
+        .subtitle-text {
+            color: #fff;
+            font-size: 16px;
+            line-height: 1.4;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="star-rings">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="ring"></div>
+    </div>
+
+    <div class="logo-container">
+        <div class="logo-image-container"></div>
+        <div class="logo">SUNPODCAST</div>
+    </div>
+
+    <div class="container">
+        <div class="blog-list" id="blogList">
+            <!-- 博客列表将通过 JavaScript 动态生成 -->
+        </div>
+    </div>
+
+    <div class="player-container" id="playerContainer">
+        <div class="now-playing" id="nowPlaying"></div>
+        <div class="player-controls">
+            <button class="play-btn" id="playBtn">
+                <i class="fas fa-play" id="playIcon"></i>
+            </button>
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="time-info" id="timeInfo">0:00 / 0:00</div>
+        </div>
+    </div>
+
+    <div class="subtitle-container" id="subtitleContainer">
+        <div class="subtitle-text" id="subtitleText"></div>
+    </div>
+
+    <script>
+        const blogs = [
+            {
+                id: 1,
+                title: "设计师需要学习 AI Coding 吗？",
+                subtitle: "这是一段副标题，用来介绍这个播客的主要内容。这是一段很长的副标题，超出两行会显示省略号...",
+                summary: "点击收听音频内容...",
+                audioUrl: "./audio/v1.MP3",
+                coverImage: "./images/cover1.jpg",
+                uploadTime: "2024-03-20",
+                playCount: 1234,
+                subtitleUrl: "./subtitles/v1.srt"
+            },
+            {
+                id: 2,
+                title: "AI 会替代设计师吗？",
+                subtitle: "第二个播客的副标题，同样支持长文本自动省略...",
+                summary: "更多精彩内容...",
+                audioUrl: "./audio/v2.mp3",
+                coverImage: "./images/cover2.jpg",
+                uploadTime: "2024-03-19",
+                playCount: 856,
+                subtitleUrl: "./subtitles/S1.srt"
+            },
+            {
+                id: 3,
+                title: "AI 搜索能否替代传统搜索？",
+                summary: "持续更新中...",
+                audioUrl: "./audio/v3.mp3",
+                coverImage: "./images/cover3.jpg",
+                uploadTime: "2024-03-18",
+                playCount: 567,
+                subtitleUrl: "./subtitles/v3.vtt"
+            },
+            {
+                id: 4,
+                title: "高领设计师的出路",
+                summary: "敬请期待...",
+                audioUrl: "./audio/v4.mp3",
+                coverImage: "./images/cover4.jpg",
+                uploadTime: "2024-03-17",
+                playCount: 345,
+                subtitleUrl: "./subtitles/v4.vtt"
+            },
+    
+        ];
+
+        // 全局变量
+        let currentAudio = null;
+        let isPlaying = false;
+        let isDragging = false;
+
+        // 播放博客函数
+        function playBlog(blog) {
+            const playerContainer = document.getElementById('playerContainer');
+            const playIcon = document.getElementById('playIcon');
+            const nowPlaying = document.getElementById('nowPlaying');
+            const progressBar = document.getElementById('progressBar');
+            const timeInfo = document.getElementById('timeInfo');
+
+            // 如果已经有正在播放的音频，先停止它
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+                isPlaying = false;
+            }
+
+            // 创建新的音频实例
+            currentAudio = new Audio(blog.audioUrl);
+            
+            // 显示播放器
+            nowPlaying.textContent = `正在播放: ${blog.title}`;
+            playerContainer.classList.add('active');
+
+            // 添加音频加载完成事件监听
+            currentAudio.addEventListener('loadedmetadata', () => {
+                timeInfo.textContent = `0:00 / ${formatTime(currentAudio.duration)}`;
+            });
+
+            // 添加进度更新事件监听
+            currentAudio.addEventListener('timeupdate', () => {
+                if (!isDragging) {
+                    const progress = (currentAudio.currentTime / currentAudio.duration) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    timeInfo.textContent = `${formatTime(currentAudio.currentTime)} / ${formatTime(currentAudio.duration)}`;
+                }
+            });
+
+            // 自动开始播放
+            currentAudio.play().then(() => {
+                isPlaying = true;
+                playIcon.className = 'fas fa-pause';
+            }).catch(error => {
+                console.error('播放失败:', error);
+                isPlaying = false;
+                playIcon.className = 'fas fa-play';
+            });
+        }
+
+        // 切换播放/暂停
+        function togglePlay() {
+            if (!currentAudio) return;
+
+            const playIcon = document.getElementById('playIcon');
+            
+            if (isPlaying) {
+                currentAudio.pause();
+                playIcon.className = 'fas fa-play';
+                isPlaying = false;
+            } else {
+                currentAudio.play().then(() => {
+                    playIcon.className = 'fas fa-pause';
+                    isPlaying = true;
+                }).catch(error => console.error('播放失败:', error));
+            }
+        }
+
+        // 格式化时间
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '0:00';
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // 创建博客卡片函数
+        function createBlogCards() {
+            const blogList = document.getElementById('blogList');
+            if (!blogList) return;
+
+            blogList.innerHTML = '';
+
+            blogs.forEach(blog => {
+                const card = document.createElement('div');
+                card.className = 'blog-card';
+                card.innerHTML = `
+                    <img src="${blog.coverImage}" alt="" class="blog-cover">
+                    <div class="blog-content">
+                        <div class="blog-title">${blog.title}</div>
+                    </div>
+                `;
+                card.addEventListener('click', () => playBlog(blog));
+                blogList.appendChild(card);
+            });
+        }
+
+        // 添加事件监听
+        document.addEventListener('DOMContentLoaded', () => {
+            // 播放按钮点击事件
+            const playBtn = document.getElementById('playBtn');
+            if (playBtn) {
+                playBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    togglePlay();
+                });
+            }
+
+            // 点击空白处暂停播放
+            document.addEventListener('click', (e) => {
+                const playerContainer = document.getElementById('playerContainer');
+                const blogList = document.getElementById('blogList');
+                const logoContainer = document.querySelector('.logo-container');
+                
+                if (!playerContainer.contains(e.target) && 
+                    !blogList.contains(e.target) && 
+                    !logoContainer.contains(e.target)) {
+                    
+                    if (currentAudio && isPlaying) {
+                        togglePlay();
+                    }
+                    playerContainer.classList.remove('active');
+                }
+            });
+
+            // 创建博客卡片
+            createBlogCards();
+
+            // 添加卡片透视效果
+            const cards = document.querySelectorAll('.blog-card');
+            
+            cards.forEach(card => {
+                card.addEventListener('mousemove', handleMouseMove);
+                card.addEventListener('mouseleave', handleMouseLeave);
+                card.addEventListener('mousedown', handleMouseDown);
+                card.addEventListener('mouseup', handleMouseUp);
+            });
+
+            function handleMouseMove(e) {
+                const card = e.currentTarget;
+                const rect = card.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
+
+                // 计算鼠标位置相对于卡片中心的偏移
+                const deltaX = (mouseX - centerX) / (rect.width / 2);
+                const deltaY = (mouseY - centerY) / (rect.height / 2);
+
+                // 限制旋转角度在 -15 到 15 度之间
+                const rotateY = deltaX * 15;
+                const rotateX = -deltaY * 15;
+
+                // 应用变换
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }
+
+            function handleMouseLeave(e) {
+                const card = e.currentTarget;
+                // 平滑恢复到原始状态
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+                card.classList.remove('active');
+            }
+
+            function handleMouseDown(e) {
+                const card = e.currentTarget;
+                // 点击时添加按效果
+                card.style.transform += ' scale(0.98)';
+                card.classList.add('active');
+            }
+
+            function handleMouseUp(e) {
+                const card = e.currentTarget;
+                // 释放时恢复缩放
+                card.style.transform = card.style.transform.replace(' scale(0.98)', '');
+            }
+
+            // 添加进度条拖拽功能
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const timeInfo = document.getElementById('timeInfo');
+
+            // 点击进度条跳转
+            progressContainer.addEventListener('click', (e) => {
+                if (!currentAudio) return;
+                const rect = progressContainer.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                currentAudio.currentTime = pos * currentAudio.duration;
+                progressBar.style.width = `${pos * 100}%`;
+                timeInfo.textContent = `${formatTime(currentAudio.currentTime)} / ${formatTime(currentAudio.duration)}`;
+            });
+
+            // 拖动进度条
+            progressContainer.addEventListener('mousedown', (e) => {
+                if (!currentAudio) return;
+                isDragging = true;
+                updateProgress(e);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    updateProgress(e);
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            function updateProgress(e) {
+                if (!currentAudio) return;
+                
+                const rect = progressContainer.getBoundingClientRect();
+                let pos = (e.clientX - rect.left) / rect.width;
+                pos = Math.max(0, Math.min(1, pos));
+                
+                progressBar.style.width = `${pos * 100}%`;
+                currentAudio.currentTime = pos * currentAudio.duration;
+                timeInfo.textContent = `${formatTime(currentAudio.currentTime)} / ${formatTime(currentAudio.duration)}`;
+            }
+
+            // 添加键盘快捷键控制
+            document.addEventListener('keydown', (e) => {
+                if (!currentAudio) return;
+
+                switch(e.code) {
+                    case 'ArrowLeft':  // 后退 5 秒
+                        currentAudio.currentTime = Math.max(0, currentAudio.currentTime - 5);
+                        break;
+                    case 'ArrowRight':  // 前进 5 秒
+                        currentAudio.currentTime = Math.min(currentAudio.duration, currentAudio.currentTime + 5);
+                        break;
+                    case 'Space':  // 空格键播放/暂停
+                        e.preventDefault();
+                        togglePlay();
+                        break;
+                }
+            });
+        });
+
+        // 初始化
+        createBlogCards();
+
+        // 创建星星效果
+        function createStar() {
+            const star = document.createElement('div');
+            star.className = 'star';
+            
+            // 随机位置
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            
+            // 随机大小 (1-3px)
+            const size = Math.random() * 2 + 1;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            
+            // 随机动画时长 (3-7秒)
+            const duration = Math.random() * 4 + 3;
+            star.style.animation = `twinkle ${duration}s infinite`;
+            
+            return star;
+        }
+
+        function initStars() {
+            const starsContainer = document.getElementById('stars');
+            
+            // 创建 100 颗固定的星星
+            for (let i = 0; i < 100; i++) {
+                const star = createStar();
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // 确保在页面加载完成后初始化星星
+        window.addEventListener('load', initStars);
+    </script>
+</body>
+</html> 
